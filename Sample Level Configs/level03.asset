@@ -15,8 +15,8 @@ MonoBehaviour:
   questionImage: {fileID: 21300000, guid: fa8f35de29d5b45458d746ebd3d47712, type: 3}
   incorrectImage: {fileID: 21300000, guid: a1ab0c3329d6fca4db15e48fa98cacd2, type: 3}
   correctImage: {fileID: 21300000, guid: 4370020f293b3f24c92412b578ca043c, type: 3}
-  question: Sample Question 03
+  question: "\u0907\u0938\u0947 \u0916\u093C\u0924\u094D\u092E \u0915\u0930\u094B"
   wordOptions:
-  - OptionA
-  - OptionB
-  correctWord: OptionA
+  - "\u092A\u0942\u0930\u093E"
+  - "\u0905\u0927\u0942\u0930\u093E"
+  correctWord: "\u092A\u0942\u0930\u093E"

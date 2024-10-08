@@ -5,74 +5,79 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class LevelController : MonoBehaviour
+public class LevelController : MonoBehaviour, ILevelSubject
 {
-    [SerializeField] private Image levelImage;
-    [SerializeField] private TextMeshProUGUI questionText;
-    [SerializeField] private TextMeshProUGUI[] optionTexts;
-    [SerializeField] private Button[] optionButtons;
-    //[SerializeField] private Button nextLevelButton;
-
+    private List<ILevelObserver> observers = new List<ILevelObserver>();
     private List<Level> levels;
-    private int currLevel = -1;
-
-    public void Initialize(List<Level> levelObj)
+    private int currIndex = -1;
+    
+    public void Initialize(List<Level> generatedLevels)
     {
-        levels = levelObj;
-        //nextLevelButton.onClick.AddListener(dispNextLevel);
-        dispNextLevel();
+        levels = generatedLevels;
+    }
+    
+    public void StartApp()
+    {
+        MoveToNextLevel();
+    }
+    //declaration of the methods in the Subject Interface
+    public void AddObserver(ILevelObserver observer)
+    {
+        observers.Add(observer);
     }
 
-    private void dispNextLevel()
+    public void RemoveObserver(ILevelObserver observer)
     {
-        currLevel++;
-        if (currLevel >= levels.Count)
+        observers.Remove(observer);
+    }
+
+    public void NotifyLevelChanged(Level newLevel)
+    {
+        foreach (var observer in observers)
         {
-            Debug.Log("all levels completed");
-            //stop all options' interaction.
-            optionButtons[0].onClick.RemoveAllListeners();
-            optionButtons[1].onClick.RemoveAllListeners();
-            return;
+            observer.OnLevelChanged(newLevel);
         }
-        //levels[currLevel] is the current level to be displayed
-        Level level = levels[currLevel];
-        displayLevel(level);
     }
 
-    private void displayLevel(Level activeLevel)
+    public void NotifyAnswerSelected(string selectedOption)
     {
-        levelImage.sprite = activeLevel.qImage;
-        questionText.text = activeLevel.question;
-
-        //changing the images accordingly
-
-
-        //randomly displaying the options
-        Unity.Mathematics.Random random = new Unity.Mathematics.Random(1983);
-        int v = random.NextInt(0, 2);
-        int ind = v;
-        optionTexts[ind].text = activeLevel.wordOptions[0];
-        ind = 1 - ind;
-        optionTexts[ind].text = activeLevel.wordOptions[1];
-        optionButtons[0].onClick.AddListener(() => optionSelected(optionTexts[0].text));
-        optionButtons[1].onClick.AddListener(() => optionSelected(optionTexts[1].text));
-
-    }
-
-    private void optionSelected(string option)
-    {
-        if (option == levels[currLevel].correctOption)
+        bool isCorrect = selectedOption == levels[currIndex].correctOption;
+        foreach (var observer in observers)
         {
-            levelImage.sprite = levels[currLevel].corrImage;
-            optionButtons[0].onClick.RemoveAllListeners();
-            optionButtons[1].onClick.RemoveAllListeners();
-            Debug.Log("Correct answer");
-            Invoke("dispNextLevel", 3.0f);
+            observer.OnAnswerSelected(selectedOption, isCorrect);
+        }
+
+        if (isCorrect)
+        {
+            Debug.Log("next level loading...");
+            StartCoroutine(WaitAndMoveToNextLevel());
         }
         else
         {
-            levelImage.sprite = levels[currLevel].incImage;
-            Debug.Log("Wrong Answer");
+            Debug.Log("wrong option selected");
+            NotifyLevelChanged(levels[currIndex]);
         }
     }
+
+    private System.Collections.IEnumerator WaitAndMoveToNextLevel()
+    {
+        yield return new WaitForSeconds(3.0f);
+        MoveToNextLevel();
+    }
+
+    private void MoveToNextLevel()
+    {
+        currIndex++;
+        if (currIndex < levels.Count)
+        {
+            NotifyLevelChanged(levels[currIndex]);
+        }
+        else
+        {
+            Debug.Log("all levels finished!");
+        }
+    }
+
+
+
 }
